@@ -97,7 +97,7 @@ A arquitetura planejada para o jogo está na seção 15 da proposta.
 
 ---
 
-### Tarefa 3: aprovação e publicação da proposta (13/11/2026)
+### Tarefa 3: aprovação e publicação da proposta (15/11/2026)
 
 **O que foi feito**
 
@@ -117,5 +117,5 @@ A arquitetura planejada para o jogo está na seção 15 da proposta.
 - [ ] Preencher os nomes dos integrantes na proposta, no README e neste relatório, e gerar o zip de novo.
 - [x] Revisar a proposta com o grupo e confirmar as decisões do agente.
 - [x] Publicar no GitHub e gerar o zip para o Canvas.
-- [ ] Enviar o zip no Canvas até 15/11/2026.
-- [ ] Cada integrante faz a atividade individual de docstrings e testes, de preferência até 14/11/2026.
+- [ ] Enviar o zip no Canvas hoje, 15/11/2026, que é o prazo final.
+- [ ] Cada integrante confere se entregou a atividade individual de docstrings e testes. O enunciado cita 14/11 e 15/11 como prazo.
