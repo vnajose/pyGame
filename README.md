@@ -1,72 +1,56 @@
-# Nome do Jogo
+# Bolha
 
-Projeto final da disciplina de Introdução a Algoritmos/Programação, desenvolvido com Python e Pygame.
+Projeto final da disciplina de Introdução a Algoritmos (Engenharia de Software, PUC Minas, Coração Eucarístico, noite, 2026/2), desenvolvido com Python e Pygame a partir do template oficial da disciplina.
 
-Este repositório é um template para os grupos da disciplina. A proposta é começar com uma base funcional e evoluir o jogo ao longo do semestre.
+Tema: **IA no cotidiano e uso responsável**, com foco em **sistemas de recomendação e bolha de filtro**.
+
+> Situação: **Entrega 1, proposta.** O código ainda é o do template. As regras abaixo descrevem o jogo planejado. Veja `docs/proposta.MD` e o histórico em `docs/relatorio.md`.
 
 ## Integrantes do grupo
 
-- Nome do integrante 1
-- Nome do integrante 2
-- Nome do integrante 3
-- Nome do integrante 4
+- José Venâncio de Carvalho Freitas
+- _(a preencher)_
+- _(a preencher)_
+- _(a preencher)_
 
 ## Estrutura do projeto
 
 - `main.py`: ponto de entrada da aplicação.
-- `src/`: código-fonte principal do jogo (loop, regras, sprites e dados).
+- `src/`: código-fonte principal do jogo (loop, regras, algoritmo de recomendação e dados).
 - `assets/`: imagens, fontes e sons.
-- `data/`: arquivos persistentes (recorde/ranking).
+- `data/`: arquivos persistentes (recorde e, futuramente, fases e categorias).
 - `tests/`: testes unitários com `pytest`.
-- `docs/`: documentação do projeto, incluindo proposta inicial.
+- `docs/`: proposta inicial (`proposta.MD`) e relatório de desenvolvimento (`relatorio.md`).
 
 ## Descrição do jogo
 
-Descreva brevemente a ideia principal do jogo.
-
-Exemplo:
-
-> O jogo consiste em controlar um personagem que deve coletar moedas e evitar obstáculos. O jogador ganha pontos ao coletar itens e perde vidas ao colidir com obstáculos. A partida termina quando o tempo acaba ou quando o jogador perde todas as vidas.
+Um Snake em que as comidas são conteúdos de cinco categorias: Esporte, Música, Games, Ciência e Notícias. Um "algoritmo de recomendação" observa o que a cobra come e passa a gerar mais comida da mesma categoria, como o feed de uma rede social. Se o jogador se fecha em uma categoria, a barra de diversidade cai, a cobra acelera no "modo vício" e as portas para as próximas fases não abrem. No final, um gráfico mostra quanto o feed ficou preso na bolha.
 
 ## Objetivo do jogador
 
-Explique o que o jogador precisa fazer para vencer ou avançar no jogo.
-
-Exemplo:
-
-> O objetivo é coletar a maior quantidade possível de itens antes que o tempo acabe, evitando colisões com os obstáculos.
+Passar pelas portas das 3 fases mantendo o feed variado, sem perder todas as vidas.
 
 ## Regras do jogo
 
-Liste as principais regras do jogo.
-
-Exemplo:
-
-- O jogador se movimenta usando as setas do teclado.
-- Cada item coletado aumenta a pontuação.
-- Colidir com um obstáculo reduz a quantidade de vidas.
-- A partida termina quando o jogador perde todas as vidas ou quando o tempo acaba.
+- O jogador começa com 3 vidas. Bater na parede, no corpo ou em uma porta fechada tira 1 vida.
+- Cada comida vale 10 pontos. Trocar de categoria em relação à comida anterior vale 5 pontos extras.
+- O algoritmo reforça as categorias comidas, e a tela vai se enchendo delas. Sempre há uma comida "fora da bolha".
+- A diversidade conta as categorias diferentes entre as últimas 8 comidas.
+- Com diversidade baixa, a cobra fica mais rápida e a porta da fase fica fechada.
+- Vitória ao passar pela porta da fase 3. Derrota ao perder todas as vidas.
 
 ## Controles
 
-Informe as teclas ou comandos utilizados no jogo.
-
-Exemplo:
-
-- Seta para cima: mover para cima
-- Seta para baixo: mover para baixo
-- Seta para esquerda: mover para esquerda
-- Seta para direita: mover para direita
-- Espaço: realizar ação
+- Setas ou W, A, S, D: mudar a direção da cobra
+- P: pausar
+- Enter: iniciar ou reiniciar a partida
 - ESC: sair do jogo
 
 ## Como executar o projeto
 
-### 1. Clonar o repositório
-
 ```bash
-git clone LINK_DO_REPOSITORIO
-cd NOME_DA_PASTA
+git clone https://github.com/vnajose/pyGame.git
+cd pyGame
 pip install -r requirements.txt
 python main.py
 ```
@@ -77,15 +61,11 @@ python main.py
 python -m pytest
 ```
 
-## Checklist mínimo para entrega
+## Recursos externos
 
-- Preencher este README com nome final, descrição real, regras e controles do jogo.
-- Atualizar `docs/proposta.MD` com a proposta do grupo.
-- Garantir que o jogo executa com `python main.py`.
-- Garantir que os testes passam com `pytest`.
+- Template oficial da disciplina: https://github.com/ICEI-PUC-Minas-PPL-CDIA/IntroAlgs_pygame_template, incluindo a spritesheet de exemplo.
+- Pygame (LGPL) e pytest (MIT).
 
-## Observações para os alunos
+## Decisões técnicas
 
-- Mantenham o código organizado em módulos pequenos e com responsabilidade clara.
-- Comentem partes importantes da lógica, principalmente regras do jogo.
-- Registrem decisões técnicas no README do grupo ao longo do desenvolvimento.
+As decisões são registradas a cada tarefa em `docs/relatorio.md`.
