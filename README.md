@@ -9,9 +9,9 @@ Tema: **IA no cotidiano e uso responsável**, com foco em **sistemas de recomend
 ## Integrantes do grupo
 
 - José Venâncio de Carvalho Freitas
-- _(a preencher)_
-- _(a preencher)_
-- _(a preencher)_
+- Yudy Samuell Magalhães Ramos
+- Lucas Dutra Figueiredo
+- Heithor Faustino Nunes dos Santos
 
 ## Estrutura do projeto
 
