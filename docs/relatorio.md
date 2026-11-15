@@ -2,7 +2,7 @@
 
 Este documento registra cada tarefa feita no projeto **Bolha**: o que foi feito, como o código ficou e como a arquitetura evoluiu. Ele é atualizado ao final de toda tarefa, para que o grupo possa revisar e entender cada mudança antes de cada entrega.
 
-- Integrantes: José Venâncio de Carvalho Freitas e demais integrantes a preencher
+- Integrantes: José Venâncio de Carvalho Freitas, Yudy Samuell Magalhães Ramos, Lucas Dutra Figueiredo e Heithor Faustino Nunes dos Santos
 - Repositório: https://github.com/vnajose/pyGame
 - Disciplina: Introdução a Algoritmos, Engenharia de Software, PUC Minas, Coração Eucarístico, noite, 2026/2
 
