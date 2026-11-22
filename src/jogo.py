@@ -1,3 +1,5 @@
+"""Loop principal do jogo Bolha: janela, estados, controles e integração."""
+
 import pygame
 
 from src.config import (
@@ -5,138 +7,249 @@ from src.config import (
     ALTURA_TELA,
     FPS,
     TITULO_JOGO,
-    CINZA,
+    VIDAS_INICIAIS,
+    TAMANHO_INICIAL_COBRA,
+    CATEGORIAS,
     CAMINHO_RECORDE,
-    CAMINHO_SPRITES,
+    COR_FUNDO,
+    COR_TEXTO,
+)
+from src.dados import carregar_recorde, salvar_recorde
+from src.recomendacao import (
+    criar_pesos_iniciais,
+    reforcar_categoria,
+    gerar_comidas,
+    calcular_diversidade,
+    intervalo_por_diversidade,
+    categoria_favorita,
+    porcentagem_categoria,
 )
 
-from src.funcoes import (
-    calcular_pontos,
-    jogador_perdeu,
-    limitar_valor,
-    verificar_colisao,
-    tomar_dano,
+# PLANO B: funções provisórias do Lucas e do Yudy.
+# Quando o merge de cada um entrar, troque estas linhas pelos imports oficiais
+# (ex.: from src.funcoes import proxima_posicao, ...).
+from src.provisorio import (
+    proxima_posicao,
+    bateu_na_parede,
+    bateu_no_corpo,
+    mover_cobra,
+    calcular_pontos_comida,
+    criar_mapa_provisorio,
+    encontrar_inicio,
+    listar_celulas_livres,
+    desenhar_mapa,
+    desenhar_cobra,
+    desenhar_comidas,
+    desenhar_painel,
 )
-from src.sprites import pegar_sprite
-from src.dados import (
-    salvar_recorde,
-    carregar_recorde,
-)
+
+# Estados do jogo
+INICIO = "inicio"
+JOGANDO = "jogando"
+PAUSA = "pausa"
+FIM = "fim"
+
+# Direções: (deslocamento na coluna, deslocamento na linha)
+CIMA = (0, -1)
+BAIXO = (0, 1)
+ESQUERDA = (-1, 0)
+DIREITA = (1, 0)
+
+TECLAS_DIRECAO = {
+    pygame.K_UP: CIMA,
+    pygame.K_w: CIMA,
+    pygame.K_DOWN: BAIXO,
+    pygame.K_s: BAIXO,
+    pygame.K_LEFT: ESQUERDA,
+    pygame.K_a: ESQUERDA,
+    pygame.K_RIGHT: DIREITA,
+    pygame.K_d: DIREITA,
+}
+
+
+def criar_cobra_inicial(inicio):
+    """Cria a cobra no S, deitada para a esquerda, andando para a direita."""
+    coluna, linha = inicio
+    cobra = []
+    for indice in range(TAMANHO_INICIAL_COBRA):
+        cobra.append((coluna - indice, linha))
+    return cobra
+
+
+def eh_direcao_oposta(direcao_1, direcao_2):
+    """Verdadeiro se as duas direções forem opostas (ex.: direita e esquerda)."""
+    return direcao_1[0] == -direcao_2[0] and direcao_1[1] == -direcao_2[1]
+
+
+def nova_partida(mapa):
+    """Cria o dicionário com todo o estado de uma partida nova."""
+    inicio = encontrar_inicio(mapa)
+    cobra = criar_cobra_inicial(inicio)
+    pesos = criar_pesos_iniciais(CATEGORIAS)
+    livres = listar_celulas_livres(mapa)
+
+    return {
+        "cobra": cobra,
+        "direcao": DIREITA,
+        "proxima_direcao": DIREITA,
+        "pesos": pesos,
+        "historico": [],
+        "comidas": gerar_comidas(pesos, livres, cobra),
+        "pontos": 0,
+        "vidas": VIDAS_INICIAIS,
+        "tempo_acumulado": 0,
+    }
+
+
+def perder_vida(partida, mapa):
+    """Tira uma vida e recomeça a cobra no S com tamanho inicial (pontos mantidos)."""
+    partida["vidas"] = partida["vidas"] - 1
+    partida["cobra"] = criar_cobra_inicial(encontrar_inicio(mapa))
+    partida["direcao"] = DIREITA
+    partida["proxima_direcao"] = DIREITA
+    partida["comidas"] = gerar_comidas(
+        partida["pesos"], listar_celulas_livres(mapa), partida["cobra"]
+    )
+
+
+def dar_um_passo(partida, mapa):
+    """Anda a cobra uma casa e aplica colisões e comida. Devolve o novo estado do jogo."""
+    partida["direcao"] = partida["proxima_direcao"]
+    cobra = partida["cobra"]
+    nova_cabeca = proxima_posicao(cobra[0], partida["direcao"])
+
+    # A cauda vai sair do lugar neste passo, então não conta como colisão.
+    corpo_sem_cauda = cobra[:-1]
+    if bateu_na_parede(nova_cabeca, mapa) or bateu_no_corpo(nova_cabeca, corpo_sem_cauda):
+        perder_vida(partida, mapa)
+        if partida["vidas"] <= 0:
+            return FIM
+        return JOGANDO
+
+    comida_comida = None
+    for comida in partida["comidas"]:
+        if comida["posicao"] == nova_cabeca:
+            comida_comida = comida
+
+    comeu = comida_comida is not None
+    partida["cobra"] = mover_cobra(cobra, nova_cabeca, comeu)
+
+    if comeu:
+        partida["pontos"] = partida["pontos"] + calcular_pontos_comida(comida_comida["fora_da_bolha"])
+        partida["pesos"], partida["historico"] = reforcar_categoria(
+            partida["pesos"], partida["historico"], comida_comida["categoria"]
+        )
+        partida["comidas"] = gerar_comidas(
+            partida["pesos"], listar_celulas_livres(mapa), partida["cobra"]
+        )
+
+    return JOGANDO
+
+
+def desenhar_texto_centralizado(tela, fonte, texto, y):
+    """Escreve um texto centralizado na horizontal."""
+    superficie = fonte.render(texto, True, COR_TEXTO)
+    tela.blit(superficie, superficie.get_rect(center=(LARGURA_TELA // 2, y)))
+
+
+def desenhar_tela_inicio(tela, fonte_grande, fonte):
+    tela.fill(COR_FUNDO)
+    desenhar_texto_centralizado(tela, fonte_grande, TITULO_JOGO, ALTURA_TELA // 2 - 40)
+    desenhar_texto_centralizado(tela, fonte, "Enter para começar", ALTURA_TELA // 2 + 20)
+    desenhar_texto_centralizado(tela, fonte, "Setas/WASD movem  |  P pausa  |  ESC sai", ALTURA_TELA // 2 + 50)
+
+
+def desenhar_tela_fim(tela, fonte_grande, fonte, partida, recorde):
+    tela.fill(COR_FUNDO)
+    desenhar_texto_centralizado(tela, fonte_grande, "Fim de jogo", 80)
+    desenhar_texto_centralizado(tela, fonte, f"Pontuação: {partida['pontos']}    Recorde: {recorde}", 140)
+    desenhar_texto_centralizado(tela, fonte, "Seu feed:", 190)
+
+    y = 230
+    for categoria in CATEGORIAS:
+        quantidade = partida["historico"].count(categoria)
+        desenhar_texto_centralizado(tela, fonte, f"{categoria}: {quantidade}", y)
+        y = y + 30
+
+    desenhar_texto_centralizado(tela, fonte, "Enter para jogar de novo", y + 30)
+
+
+def desenhar_jogo(tela, fonte, partida, mapa):
+    diversidade = calcular_diversidade(partida["historico"])
+    favorita = categoria_favorita(partida["pesos"])
+    desenhar_mapa(tela, mapa)
+    desenhar_comidas(tela, partida["comidas"], fonte)
+    desenhar_cobra(tela, partida["cobra"])
+    desenhar_painel(
+        tela, fonte, partida["pontos"], partida["vidas"], diversidade,
+        favorita, porcentagem_categoria(partida["pesos"], favorita),
+    )
 
 
 def executar_jogo():
-    """Executa o loop principal do jogo e controla estado, colisões e pontuação."""
+    """Executa o loop principal: eventos, atualização por passos e desenho."""
     pygame.init()
-    
-
     tela = pygame.display.set_mode((LARGURA_TELA, ALTURA_TELA))
     pygame.display.set_caption(TITULO_JOGO)
-
     relogio = pygame.time.Clock()
+    fonte = pygame.font.SysFont(None, 26)
+    fonte_grande = pygame.font.SysFont(None, 72)
+
+    mapa = criar_mapa_provisorio()   # PLANO B: trocar pela leitura de data/fase1.txt do Yudy
+    partida = nova_partida(mapa)
+    recorde = carregar_recorde(CAMINHO_RECORDE)
+    estado = INICIO
     rodando = True
 
-    # 1. Carregando as imagens recortadas do Spritesheet
-
-
-    # Jogador: usando tamanho 110x110 para capturar o quadrado perfeitamente
-    player_image = pegar_sprite(CAMINHO_SPRITES, x=110, y=120, width=190, height=190, scale=0.5)
-
-    # Gema pequena: usando tamanho 64x64
-    gem_image    = pegar_sprite(CAMINHO_SPRITES, x=900, y=690, width=200, height=200, scale=0.5)
-
-    # Morcego: usando tamanho 180x120 por causa das asas abertas
-    bat_image    = pegar_sprite(CAMINHO_SPRITES, x=905, y=1060, width=200, height=130, scale=0.5)
-    
-    # 2. Criando a estrutura de Sprites usando Dicionários
-    jogador = {
-        "imagem": player_image,
-        "rect": player_image.get_rect(topleft=(100, 100))
-    }
-
-    gema = {
-        "imagem": gem_image,
-        "rect": gem_image.get_rect(topleft=(500, 300))
-    }
-    
-    inimigo = {
-        "imagem": bat_image,
-        "rect": bat_image.get_rect(topleft=(200, 500))
-    }
-
-    velocidade = 5
-    pontos = 0
-    vidas = 3
-    recorde = carregar_recorde(CAMINHO_RECORDE)
-
-    # Loop principal: processa entrada, atualiza estado e renderiza a cena.
     while rodando:
-        relogio.tick(FPS)
+        tempo_do_frame = relogio.tick(FPS)
 
+        # ---------- Eventos ----------
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 rodando = False
 
-        teclas = pygame.key.get_pressed()
+            elif evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_ESCAPE:
+                    rodando = False
 
-        # Movimentação alterando direto os eixos X e Y do retângulo do jogador
-        if teclas[pygame.K_LEFT]:
-            jogador["rect"].x -= velocidade
-        if teclas[pygame.K_RIGHT]:
-            jogador["rect"].x += velocidade
-        if teclas[pygame.K_UP]:
-            jogador["rect"].y -= velocidade
-        if teclas[pygame.K_DOWN]:
-            jogador["rect"].y += velocidade
+                elif evento.key == pygame.K_RETURN and estado in (INICIO, FIM):
+                    partida = nova_partida(mapa)
+                    estado = JOGANDO
 
-        # Limitando o jogador dentro das bordas da tela usando as propriedades do Rect
-        jogador["rect"].x = limitar_valor(jogador["rect"].x, 0, LARGURA_TELA - jogador["rect"].width)
-        jogador["rect"].y = limitar_valor(jogador["rect"].y, 0, ALTURA_TELA - jogador["rect"].height)
+                elif evento.key == pygame.K_p and estado == JOGANDO:
+                    estado = PAUSA
+                elif evento.key == pygame.K_p and estado == PAUSA:
+                    estado = JOGANDO
 
-        # Verificação de colisão com a Gema (antigo 'item')
-        if verificar_colisao(jogador["rect"], gema["rect"]):
-            pontos = calcular_pontos(pontos, 10)
+                elif evento.key in TECLAS_DIRECAO and estado == JOGANDO:
+                    nova_direcao = TECLAS_DIRECAO[evento.key]
+                    if not eh_direcao_oposta(nova_direcao, partida["direcao"]):
+                        partida["proxima_direcao"] = nova_direcao
 
-            # Move a gema de lugar ao coletar
-            gema["rect"].x += 80
-            gema["rect"].y += 50
+        # ---------- Atualização por passos ----------
+        if estado == JOGANDO:
+            partida["tempo_acumulado"] = partida["tempo_acumulado"] + tempo_do_frame
+            diversidade = calcular_diversidade(partida["historico"])
+            intervalo = intervalo_por_diversidade(diversidade)
 
-            # Se a gema sair da tela, volta para uma posição segura
-            if gema["rect"].x > LARGURA_TELA - gema["rect"].width:
-                gema["rect"].x = 50
-            if gema["rect"].y > ALTURA_TELA - gema["rect"].height:
-                gema["rect"].y = 50
+            if partida["tempo_acumulado"] >= intervalo:
+                partida["tempo_acumulado"] = 0
+                estado = dar_um_passo(partida, mapa)
 
-        # Verificação de colisão com o Inimigo
-        if verificar_colisao(jogador["rect"], inimigo["rect"]):
-            vidas = tomar_dano(vidas, 1)
+                if estado == FIM and partida["pontos"] > recorde:
+                    recorde = partida["pontos"]
+                    salvar_recorde(CAMINHO_RECORDE, recorde)
 
-            # Afasta o inimigo ao colidir
-            inimigo["rect"].x += 80
-            inimigo["rect"].y += 50
-
-            if inimigo["rect"].x > LARGURA_TELA - inimigo["rect"].width:
-                inimigo["rect"].x = 50
-            if inimigo["rect"].y > ALTURA_TELA - inimigo["rect"].height:
-                inimigo["rect"].y = 50
-
-        # Regras de fim de jogo e recorde
-        if jogador_perdeu(vidas):
-            rodando = False
-
-        if pontos > recorde:
-            recorde = pontos
-            salvar_recorde(CAMINHO_RECORDE, recorde)
-
-        pygame.display.set_caption(
-            f"{TITULO_JOGO} | Pontos: {pontos} | Recorde: {recorde} | Vidas: {vidas}"
-        )
-
-        tela.fill(CINZA)
-
-        # Desenhando os elementos na tela passando a imagem e o rect de cada dicionário
-        tela.blit(gema["imagem"], gema["rect"])
-        tela.blit(inimigo["imagem"], inimigo["rect"])
-        tela.blit(jogador["imagem"], jogador["rect"])
+        # ---------- Desenho ----------
+        if estado == INICIO:
+            desenhar_tela_inicio(tela, fonte_grande, fonte)
+        elif estado == FIM:
+            desenhar_tela_fim(tela, fonte_grande, fonte, partida, recorde)
+        else:
+            desenhar_jogo(tela, fonte, partida, mapa)
+            if estado == PAUSA:
+                desenhar_texto_centralizado(tela, fonte_grande, "PAUSA", ALTURA_TELA // 2)
 
         pygame.display.flip()
 
