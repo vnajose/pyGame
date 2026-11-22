@@ -14,7 +14,13 @@ from src.config import (
     COR_FUNDO,
     COR_TEXTO,
 )
-from src.dados import carregar_recorde, salvar_recorde
+from src.dados import (
+    carregar_recorde,
+    salvar_recorde,
+    carregar_mapa,
+    encontrar_inicio,
+    listar_celulas_livres,
+)
 from src.recomendacao import (
     criar_pesos_iniciais,
     reforcar_categoria,
@@ -24,23 +30,19 @@ from src.recomendacao import (
     categoria_favorita,
     porcentagem_categoria,
 )
-
-# PLANO B: funções provisórias do Lucas e do Yudy.
-# Quando o merge de cada um entrar, troque estas linhas pelos imports oficiais
-# (ex.: from src.funcoes import proxima_posicao, ...).
+from src.desenho import (
+    desenhar_mapa,
+    desenhar_cobra,
+    desenhar_comidas,
+    desenhar_painel,
+)
+# Carregar o mapa da primeira fase
 from src.provisorio import (
     proxima_posicao,
     bateu_na_parede,
     bateu_no_corpo,
     mover_cobra,
     calcular_pontos_comida,
-    criar_mapa_provisorio,
-    encontrar_inicio,
-    listar_celulas_livres,
-    desenhar_mapa,
-    desenhar_cobra,
-    desenhar_comidas,
-    desenhar_painel,
 )
 
 # Estados do jogo
@@ -195,7 +197,7 @@ def executar_jogo():
     fonte = pygame.font.SysFont(None, 26)
     fonte_grande = pygame.font.SysFont(None, 72)
 
-    mapa = criar_mapa_provisorio()   # PLANO B: trocar pela leitura de data/fase1.txt do Yudy
+    mapa = carregar_mapa()   # PLANO B: trocar pela leitura de data/fase1.txt do Yudy
     partida = nova_partida(mapa)
     recorde = carregar_recorde(CAMINHO_RECORDE)
     estado = INICIO
