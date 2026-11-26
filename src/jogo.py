@@ -151,12 +151,32 @@ def desenhar_texto_centralizado(tela, fonte, texto, y):
     superficie = fonte.render(texto, True, COR_TEXTO)
     tela.blit(superficie, superficie.get_rect(center=(LARGURA_TELA // 2, y)))
 
+# Regras mostradas na tela inicial
+REGRAS = [
+    "Coma as comidas para crescer e ganhar pontos.",
+    "Cada cor/letra é uma categoria de conteúdo.",
+    "O sistema de recomendação aprende o que você come",
+    "e passa a mostrar mais da mesma categoria.",
+    "Comidas com contorno branco estão fora da bolha e valem mais.",
+    "Pouca diversidade deixa a cobra mais rápida.",
+    "Bater na parede ou no próprio corpo tira uma vida.",
+]
 
 def desenhar_tela_inicio(tela, fonte_grande, fonte):
+    """Tela inicial: título, regras do jogo e controles."""
     tela.fill(COR_FUNDO)
-    desenhar_texto_centralizado(tela, fonte_grande, TITULO_JOGO, ALTURA_TELA // 2 - 40)
-    desenhar_texto_centralizado(tela, fonte, "Enter para começar", ALTURA_TELA // 2 + 20)
-    desenhar_texto_centralizado(tela, fonte, "Setas/WASD movem  |  P pausa  |  ESC sai", ALTURA_TELA // 2 + 50)
+
+    desenhar_texto_centralizado(tela, fonte_grande, TITULO_JOGO, 70)
+    desenhar_texto_centralizado(tela, fonte, "Como jogar", 130)
+
+    y = 170
+    espaco_entre_linhas = 28
+    for regra in REGRAS:
+        desenhar_texto_centralizado(tela, fonte, regra, y)
+        y = y + espaco_entre_linhas
+
+    desenhar_texto_centralizado(tela, fonte, "Setas/WASD movem  |  P pausa  |  ESC sai", y + 30)
+    desenhar_texto_centralizado(tela, fonte, "Enter para começar", y + 70)
 
 
 def desenhar_tela_fim(tela, fonte_grande, fonte, partida, recorde):
